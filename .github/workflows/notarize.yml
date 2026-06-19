@@ -210,6 +210,14 @@ jobs:
           # Find non-Mach-O files in Frameworks
           non_macho_files=$(find "$FRAMEWORKS_DIR" -type f -exec file {} \; | grep -v 'Mach-O' | cut -d: -f1)
 
+          # Remove broken symlinks from the app bundle
+          find "$APP_PATH" -type l | while read -r link; do
+            if [ ! -e "$link" ]; then
+              echo "Removing broken symlink: $link -> $(readlink "$link")"
+              rm -f "$link"
+            fi
+          done
+
           echo "✅ Frameworks folder is clean and ready for signing."
           echo "::endgroup::"
 
