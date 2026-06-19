@@ -163,7 +163,12 @@ jobs:
 
       - name: 🖋️ Clean and sign app
         run: |
-          APP_PATH=$(echo ./*.app)
+          APP_PATH=$(ls -d ./*.app 2>/dev/null | head -n 1)
+          if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
+            echo "❌ No .app bundle found to verify in $(pwd)"
+            ls -la
+            exit 1
+          fi
 
           # Step 0: relocate python files
           echo "::group::Relocate Python Files"
@@ -266,7 +271,12 @@ jobs:
 
       - name: 🔧 Recreate DMG (clean signed app)
         run: |
-          APP_PATH=$(echo *.app)
+          APP_PATH=$(ls -d ./*.app 2>/dev/null | head -n 1)
+          if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
+            echo "❌ No .app bundle found to verify in $(pwd)"
+            ls -la
+            exit 1
+          fi
           QGIS_APP_NAME="${APP_PATH%.*}"
 
           brew install create-dmg
@@ -313,6 +323,11 @@ jobs:
         if: always()
         run: |
           echo "${{ secrets.APPSTORE_PRIVATE_KEY }}" > authkey.p8
+
+          if [ -z "$NOTARIZATION_ID" ]; then
+            echo "⚠️ No NOTARIZATION_ID available; skipping log retrieval."
+            exit 0
+          fi
 
           xcrun notarytool log "$NOTARIZATION_ID" \
             --key authkey.p8 \
